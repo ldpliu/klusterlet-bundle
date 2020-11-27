@@ -3,3 +3,6 @@ tmp
 Dockerfile
 manifests
 metadata
+upstream/database
+upstream/etc
+upstream/opm

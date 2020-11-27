@@ -6,16 +6,36 @@
 
 # Args:
 #
-# $1 = Current release branch eg:release-2.2
+# -r Current release branch, the default value is "master" which code is same as the current release.
+# -p Previous klusterlet operator version, default:""
+# -c use a specific commit in git clone, default: ""
 #
 
-# Should change this value before each release.
-default_release_branch="release-2.2"
+# Currentlly, we master branch code is same as the current release
+default_release_branch="master"
 
+opt_flags="r:c:p:"
 
-current_release_branch="$1"
+push_the_image=0
 
-if [[ ${current_release_branch:0:7} != "release" ]];then
+while getopts "$opt_flags" OPTION; do
+   case "$OPTION" in
+      r) current_release_branch="$OPTARG"
+         ;;
+      p) previous_operator_version="$OPTARG"
+         ;;
+      c) use_commit="$OPTARG"
+         ;;
+      ?) exit 1
+         ;;
+   esac
+done
+shift "$(($OPTIND -1))"
+
+me=$(basename $0)
+my_dir=$(dirname $(readlink -f $0))
+
+if [ "${current_release_branch}" = "" ]; then
 current_release_branch=${default_release_branch}
 fi
 
@@ -23,39 +43,54 @@ echo "current branch is ${current_release_branch}"
 
 channels_label=${current_release_branch}
 
-pwd=`pwd`
-tmp_dir="${pwd}/tmp"
+tmp_dir="${my_dir}/tmp"
 registration_operator_url="https://github.com/open-cluster-management/registration-operator.git"
 
 #clean previous data if it's exist
-rm -rf $tmp_dir
+rm -rf $tmp_dir manifests metadata Dockerfile
 mkdir -p $tmp_dir
 
 cd $tmp_dir
 
 echo "clone registration-operator ${current_release_branch}"
 git clone -b "${current_release_branch}" "${registration_operator_url}"
-
 if [[ $? -ne 0 ]]; then
   >&2 echo "Error: Could not clone registration-operator ${current_release_branch} repo."
   >&2 echo "Aborting."
   exit 2
 fi
 
-mv $tmp_dir/registration-operator/deploy/klusterlet/olm-catalog/klusterlet/manifests ${pwd}
-mv $tmp_dir/registration-operator/deploy/klusterlet/olm-catalog/klusterlet/metadata ${pwd}
+if [ "${use_commit}" != "" ]; then
+  echo "Use commit ${use_commit}"
+  cd registration-operator
+  git checkout "${use_commit}"
+  if [[ $? -ne 0 ]]; then
+    >&2 echo "Error: Could not checkout to ${use_commit}."
+    >&2 echo "Aborting."
+    exit 2
+  fi
+  cd ../
+fi
+
+# If their is no previous version, delete "replaces:" field in csv
+if [ "$previous_operator_version" = "" ]; then
+  echo "Previous version is null ${previous_operator_version}"
+  sed -i '/^ *replaces:.*/d' $tmp_dir/registration-operator/deploy/klusterlet/olm-catalog/klusterlet/manifests/klusterlet.clusterserviceversion.yaml
+fi
+
+mv $tmp_dir/registration-operator/deploy/klusterlet/olm-catalog/klusterlet/manifests ${my_dir}
+mv $tmp_dir/registration-operator/deploy/klusterlet/olm-catalog/klusterlet/metadata ${my_dir}
 
 # Turn metadata/annotations.yaml into LABEL statemetns for Dockerfile
 # - Drop "annotations:" line
 # - Convert all others to LABEL statement
 tmp_label_lines="$tmp_dir/label-lines"
-tail -n +2 "${pwd}/metadata/annotations.yaml" | \
+tail -n +2 "${my_dir}/metadata/annotations.yaml" | \
     sed "s/: /=/" | sed "s/^ /LABEL/" | sed "s/stable/${channels_label}/g"> "$tmp_label_lines"
 
-cat "$pwd/Dockerfile.template" | \
+cat "$my_dir/Dockerfile.template" | \
     sed "/!!ANNOTATION_LABELS!!/r $tmp_label_lines" | \
-    sed "/!!ANNOTATION_LABELS!!/d" > "${pwd}/Dockerfile"
+    sed "/!!ANNOTATION_LABELS!!/d" > "${my_dir}/Dockerfile"
 rm -rf "$tmp_dir"
 
 echo "Finished to generate Dockerfile"
-
