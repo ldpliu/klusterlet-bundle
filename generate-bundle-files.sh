@@ -6,21 +6,36 @@
 
 # Args:
 #
-# $1 = Current release branch eg:release-2.2
-# $2 = Previous klusterlet operator version eg:0.3.0
+# -r Current release branch, the default value is "master" which code is same as the current release.
+# -p Previous klusterlet operator version, default:""
+# -c Use a specific commit in git clone, default: ""
+#
 
-# Should change this value before each release.
-default_release_branch="release-2.2"
+# Currentlly, we master branch code is same as the current release
+default_release_branch="master"
 
-current_release_branch="$1"
-previous_operator_version="$2"
+opt_flags="r:c:p:"
 
+push_the_image=0
+
+while getopts "$opt_flags" OPTION; do
+   case "$OPTION" in
+      r) current_release_branch="$OPTARG"
+         ;;
+      p) previous_operator_version="$OPTARG"
+         ;;
+      c) use_commit="$OPTARG"
+         ;;
+      ?) exit 1
+         ;;
+   esac
+done
+shift "$(($OPTIND -1))"
 
 me=$(basename $0)
 my_dir=$(dirname $(readlink -f $0))
 
-
-if [[ ${current_release_branch:0:7} != "release" ]];then
+if [ "${current_release_branch}" = "" ]; then
 current_release_branch=${default_release_branch}
 fi
 
@@ -45,7 +60,19 @@ if [[ $? -ne 0 ]]; then
   exit 2
 fi
 
-# If their is no previous version, delete "replaces:" filed in csv
+if [ "${use_commit}" != "" ]; then
+  echo "Use commit ${use_commit}"
+  cd registration-operator
+  git checkout "${use_commit}"
+  if [[ $? -ne 0 ]]; then
+    >&2 echo "Error: Could not checkout to ${use_commit}."
+    >&2 echo "Aborting."
+    exit 2
+  fi
+  cd ../
+fi
+
+# If their is no previous version, delete "replaces:" field in csv
 if [ "$previous_operator_version" = "" ]; then
   echo "Previous version is null ${previous_operator_version}"
   sed -i '/^ *replaces:.*/d' $tmp_dir/registration-operator/deploy/klusterlet/olm-catalog/klusterlet/manifests/klusterlet.clusterserviceversion.yaml
@@ -67,4 +94,3 @@ cat "$my_dir/Dockerfile.template" | \
 rm -rf "$tmp_dir"
 
 echo "Finished to generate Dockerfile"
-
