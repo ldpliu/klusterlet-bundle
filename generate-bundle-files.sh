@@ -47,9 +47,10 @@ tmp_dir="${my_dir}/tmp"
 registration_operator_url="https://github.com/open-cluster-management/registration-operator.git"
 
 #clean previous data if it's exist
-rm -rf $tmp_dir manifests metadata Dockerfile
+rm -rf $tmp_dir ${my_dir}/manifests ${my_dir}/metadata ${my_dir}/Dockerfile
 mkdir -p $tmp_dir
 
+pwd=`pwd`
 cd $tmp_dir
 
 echo "clone registration-operator ${current_release_branch}"
@@ -69,7 +70,6 @@ if [ "${use_commit}" != "" ]; then
     >&2 echo "Aborting."
     exit 2
   fi
-  cd ../
 fi
 
 # If their is no previous version, delete "replaces:" field in csv
@@ -92,5 +92,7 @@ cat "$my_dir/Dockerfile.template" | \
     sed "/!!ANNOTATION_LABELS!!/r $tmp_label_lines" | \
     sed "/!!ANNOTATION_LABELS!!/d" > "${my_dir}/Dockerfile"
 rm -rf "$tmp_dir"
+
+cd $pwd
 
 echo "Finished to generate Dockerfile"
