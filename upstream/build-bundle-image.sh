@@ -6,7 +6,7 @@
 # -- Args ---
 #
 # -r Remote registry server/namespace.  (Default: quay.io/open-cluster-management)
-# -n image Name  (Default: klusterlet-bundle)
+# -b image Name  (Default: klusterlet-bundle)
 # -t image Tag (Default: 0.3.0)
 # -P Push the image (switch)
 #
@@ -21,11 +21,11 @@ while getopts "$opt_flags" OPTION; do
    case "$OPTION" in
       r) remote_rgy_and_ns="$OPTARG"
          ;;
-      n) bundle_image_name="$OPTARG"
+      b) bundle_image_name="$OPTARG"
+         ;;
+      t) image_tag="$OPTARG"
          ;;
       P) push_the_image=1
-         ;;
-      t) image_tag="-t $OPTARG"
          ;;
       ?) exit 1
          ;;
@@ -66,8 +66,7 @@ done
 
 echo "Buiding build image ${bundle_image_url}"
 # Build the image locally
-docker build -t "$bundle_image_url" -f ./Dockerfile
-
+docker build -t "$bundle_image_url" -f "$top_dir/Dockerfile" $top_dir
 
 if [[ $? -ne 0 ]]; then
    >&2 echo "Error: Could not build klusterlet bundle image."

@@ -8,7 +8,7 @@
 #
 # -r Current release branch, the default value is "master" which code is same as the current release.
 # -p Previous klusterlet operator version, default:""
-# -c use a specific commit in git clone, default: ""
+# -c Use a specific commit in git clone, default: ""
 #
 
 # Currentlly, we master branch code is same as the current release
