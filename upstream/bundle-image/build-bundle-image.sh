@@ -7,12 +7,17 @@
 #
 # -r Remote registry server/namespace.  (Default: quay.io/open-cluster-management)
 # -b image Name  (Default: klusterlet-bundle)
-# -t image Tag (Default: 0.3.0)
+# -t image Tag 
 # -P Push the image (switch)
 #
 # For backward compatibility with initial version of this script (deprecated):
+me=$(basename $0)
+my_dir=$(dirname $(readlink -f $0))
+top_dir=$(readlink  -f $my_dir/../..)
 
-opt_flags="r:n:t:P:"
+
+
+opt_flags="r:b:t:P"
 
 push_the_image=0
 image_tag=""
@@ -33,10 +38,10 @@ while getopts "$opt_flags" OPTION; do
 done
 shift "$(($OPTIND -1))"
 
-me=$(basename $0)
-my_dir=$(dirname $(readlink -f $0))
-top_dir=$(readlink  -f $my_dir/..)
-
+if [ "${image_tag}" = "" ]; then
+   >&2 echo "Error: Image tag must be set by -t"
+   exit 2
+fi
 
 manifests_dir=${top_dir}/manifests
 metadata_dir=${top_dir}/metadata
@@ -52,17 +57,11 @@ fi
 
 remote_rgy_and_ns="${remote_rgy_and_ns:-quay.io/open-cluster-management}"
 bundle_image_name="${bundle_image_name:-klusterlet-bundle}"
-image_tag="${image_tag:-0.3.0}"
 
 
 bundle_image_rgy_ns_and_name="$remote_rgy_and_ns/$bundle_image_name"
 bundle_image_url="$bundle_image_rgy_ns_and_name:$image_tag"
 
-# Get rid of previous local image if any
-images=$(docker images --format "{{.Repository}}:{{.Tag}}" "$bundle_image_rgy_ns_and_name")
-for img in $images; do
-   docker rmi "$img" > /dev/null
-done
 
 echo "Buiding build image ${bundle_image_url}"
 # Build the image locally

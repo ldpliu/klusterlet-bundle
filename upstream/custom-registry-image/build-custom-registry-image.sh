@@ -1,7 +1,7 @@
 #!/bin/bash
 me=$(basename $0)
 my_dir=$(dirname $(readlink -f $0))
-top_dir=$(readlink  -f $my_dir/..)
+top_dir=$(readlink  -f $my_dir/../..)
 
 opm_vers="v1.13.3"
 operator_rgy_repo_url="https://github.com/operator-framework/operator-registry"
@@ -16,9 +16,10 @@ opm_download_url="$operator_rgy_repo_url/releases/download/$opm_vers/linux-amd64
 # -P Push image (switch)
 #
 
-opt_flags="r:b:c:PJ:"
+opt_flags="r:b:c:t:P"
 
 push_the_image=0
+bundle_and_catalog_tag=""
 
 while getopts "$opt_flags" OPTION; do
    case "$OPTION" in
@@ -28,9 +29,9 @@ while getopts "$opt_flags" OPTION; do
          ;;
       c) catalog_image_name="$OPTARG"
          ;;
-      P) push_the_image=1
-         ;;
       t) bundle_and_catalog_tag="$OPTARG"
+         ;;
+      P) push_the_image=1
          ;;
       ?) exit 1
          ;;
@@ -38,11 +39,20 @@ while getopts "$opt_flags" OPTION; do
 done
 shift "$(($OPTIND -1))"
 
+echo "### -r $remote_rgy_and_ns"
+echo "### -p $push_the_image"
+echo "### -b $bundle_image_name"
+echo "### -t $bundle_and_catalog_tag"
+
+if [ "${bundle_and_catalog_tag}" = "" ]; then
+   >&2 echo "Error: Image tag must be set by -t"
+   exit 2
+fi
+
 
 remote_rgy_and_ns="${remote_rgy_and_ns:-quay.io/open-cluster-management}"
 bundle_image_name="${bundle_image_name:-klusterlet-bundle}"
 catalog_image_name="${catalog_image_name:-klusterlet-custom-registry}"
-bundle_and_catalog_tag="${bundle_and_catalog_tag:-0.3.0}"
 
 bundle_image_ref="$remote_rgy_and_ns/$bundle_image_name:$bundle_and_catalog_tag"
 catalog_image_ref="$remote_rgy_and_ns/$catalog_image_name:$bundle_and_catalog_tag"
@@ -59,6 +69,8 @@ old_images=$(docker images --format "{{.Repository}}:{{.Tag}}" "$catalog_image_r
 for img in $old_images; do
    docker rmi "$img" > /dev/null
 done
+
+pwd=`pwd`
 
 # use upstream as working dir
 cd $top_dir/upstream/
@@ -109,7 +121,7 @@ if [[ $? -ne 0 ]]; then
 fi
 
 
-cp "$top_dir/upstream/Dockerfile.index" .
+cp "$my_dir/Dockerfile.index" .
 mkdir "etc"
 touch "etc/nsswitch.conf"
 chmod a+r "etc/nsswitch.conf"
@@ -131,3 +143,4 @@ if [[ $push_the_image -eq 1 ]]; then
    echo "Pushed custom catalog image: $catalog_image_ref"
 fi
 
+cd $pwd

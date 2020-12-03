@@ -6,3 +6,4 @@ metadata
 upstream/database
 upstream/etc
 upstream/opm
+upstream/image-pinning/__pycache__
