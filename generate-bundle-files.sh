@@ -84,13 +84,14 @@ mv $tmp_dir/registration-operator/deploy/klusterlet/olm-catalog/klusterlet/metad
 # Turn metadata/annotations.yaml into LABEL statemetns for Dockerfile
 # - Drop "annotations:" line
 # - Convert all others to LABEL statement
-tmp_label_lines="$tmp_dir/label-lines"
-tail -n +2 "${my_dir}/metadata/annotations.yaml" | \
-    sed "s/: /=/" | sed "s/^ /LABEL/" | sed "s/stable/${channels_label}/g"> "$tmp_label_lines"
 
-cat "$my_dir/Dockerfile.template" | \
-    sed "/!!ANNOTATION_LABELS!!/r $tmp_label_lines" | \
-    sed "/!!ANNOTATION_LABELS!!/d" > "${my_dir}/Dockerfile"
+#tmp_label_lines="$tmp_dir/label-lines"
+#tail -n +2 "${my_dir}/metadata/annotations.yaml" | \
+#    sed "s/: /=/" | sed "s/^ /LABEL/" | sed "s/stable/${channels_label}/g"> "$tmp_label_lines"
+
+#cat "$my_dir/Dockerfile.template" | \
+#    sed "/!!ANNOTATION_LABELS!!/r $tmp_label_lines" | \
+#    sed "/!!ANNOTATION_LABELS!!/d" > "${my_dir}/Dockerfile"
 rm -rf "$tmp_dir"
 
 cd $pwd
