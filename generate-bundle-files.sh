@@ -35,6 +35,8 @@ shift "$(($OPTIND -1))"
 me=$(basename $0)
 my_dir=$(dirname $(readlink -f $0))
 
+python3 -m pip install pyyaml
+
 if [ "${current_release_branch}" = "" ]; then
 current_release_branch=${default_release_branch}
 fi
@@ -81,10 +83,17 @@ fi
 mv $tmp_dir/registration-operator/deploy/klusterlet/olm-catalog/klusterlet/manifests ${my_dir}
 mv $tmp_dir/registration-operator/deploy/klusterlet/olm-catalog/klusterlet/metadata ${my_dir}
 
+cd ${my_dir}
+csv_file_path=${my_dir}/manifests/klusterlet.clusterserviceversion.yaml
+echo $csv_file_path
+csv_version=`python -c 'import parse_csv; print(parse_csv.get_version('\"${csv_file_path}\"'))'`
+
+# Rename csv to versioned csv
+mv ${my_dir}/manifests/klusterlet.clusterserviceversion.yaml ${my_dir}/manifests/klusterlet.${csv_version}.clusterserviceversion.yaml 
+
 # Turn metadata/annotations.yaml into LABEL statemetns for Dockerfile
 # - Drop "annotations:" line
 # - Convert all others to LABEL statement
-
 #tmp_label_lines="$tmp_dir/label-lines"
 #tail -n +2 "${my_dir}/metadata/annotations.yaml" | \
 #    sed "s/: /=/" | sed "s/^ /LABEL/" | sed "s/stable/${channels_label}/g"> "$tmp_label_lines"
