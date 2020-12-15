@@ -81,11 +81,13 @@ cd ${my_dir}
 csv_file_path=${my_dir}/manifests/klusterlet.clusterserviceversion.yaml
 version_config=${my_dir}/community-to-product-version.json
 
-echo $csv_file_path
 csv_version=`python -c 'import parse_csv; print(parse_csv.update_csv('\"${csv_file_path}\",\"${version_config}\",\"${previous_operator_version}\"'))'`
 
 # Rename csv to versioned csv
 mv ${my_dir}/manifests/klusterlet.clusterserviceversion.yaml ${my_dir}/manifests/klusterlet."v"${csv_version}.clusterserviceversion.yaml 
+
+# Replace channel   
+sed -i "s/stable/${channels_label}/g" ${my_dir}/metadata/annotations.yaml
 
 rm -rf "$tmp_dir"
 
