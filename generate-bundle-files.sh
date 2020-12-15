@@ -74,33 +74,19 @@ if [ "${use_commit}" != "" ]; then
   fi
 fi
 
-# If their is no previous version, delete "replaces:" field in csv
-if [ "$previous_operator_version" = "" ]; then
-  echo "Previous version is null ${previous_operator_version}"
-  sed -i '/^ *replaces:.*/d' $tmp_dir/registration-operator/deploy/klusterlet/olm-catalog/klusterlet/manifests/klusterlet.clusterserviceversion.yaml
-fi
-
 mv $tmp_dir/registration-operator/deploy/klusterlet/olm-catalog/klusterlet/manifests ${my_dir}
 mv $tmp_dir/registration-operator/deploy/klusterlet/olm-catalog/klusterlet/metadata ${my_dir}
 
 cd ${my_dir}
 csv_file_path=${my_dir}/manifests/klusterlet.clusterserviceversion.yaml
+version_config=${my_dir}/community-to-product-version.json
+
 echo $csv_file_path
-csv_version=`python -c 'import parse_csv; print(parse_csv.get_version('\"${csv_file_path}\"'))'`
+csv_version=`python -c 'import parse_csv; print(parse_csv.update_csv('\"${csv_file_path}\",\"${version_config}\",\"${previous_operator_version}\"'))'`
 
 # Rename csv to versioned csv
-mv ${my_dir}/manifests/klusterlet.clusterserviceversion.yaml ${my_dir}/manifests/klusterlet.${csv_version}.clusterserviceversion.yaml 
+mv ${my_dir}/manifests/klusterlet.clusterserviceversion.yaml ${my_dir}/manifests/klusterlet."v"${csv_version}.clusterserviceversion.yaml 
 
-# Turn metadata/annotations.yaml into LABEL statemetns for Dockerfile
-# - Drop "annotations:" line
-# - Convert all others to LABEL statement
-#tmp_label_lines="$tmp_dir/label-lines"
-#tail -n +2 "${my_dir}/metadata/annotations.yaml" | \
-#    sed "s/: /=/" | sed "s/^ /LABEL/" | sed "s/stable/${channels_label}/g"> "$tmp_label_lines"
-
-#cat "$my_dir/Dockerfile.template" | \
-#    sed "/!!ANNOTATION_LABELS!!/r $tmp_label_lines" | \
-#    sed "/!!ANNOTATION_LABELS!!/d" > "${my_dir}/Dockerfile"
 rm -rf "$tmp_dir"
 
 cd $pwd
