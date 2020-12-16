@@ -17,12 +17,20 @@ def load_manifest(pathn):
       print("File can not found")
       exit(2)
 
+# Get community version from csv file   
+def get_community_version(pathn):
+   klusterlet_csv = load_manifest(pathn)
+   # the csv name should be klusterlet.x.x.x 
+   csv_version = klusterlet_csv["spec"]["version"]
+   return csv_version
+
 # Get product version which save in community_to_product_version config file
 def get_product_version(config, community_version):
    with open(config, "r", encoding="UTF-8") as file:
       obj = json.load(file)
    return obj[community_version]
 
+# dump_manifest will change format of annotation and describe in csv, so do no use it.
 def dump_manifest(pathn, manifest):
    with open(pathn, "w") as f:
       yaml.dump(manifest, f, width=100, default_flow_style=False, sort_keys=False)

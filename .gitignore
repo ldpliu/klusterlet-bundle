@@ -4,3 +4,6 @@ Dockerfile
 manifests
 metadata
 __pycache__
+custom-registry-image/database
+custom-registry-image/opm
+custom-registry-image/etc
