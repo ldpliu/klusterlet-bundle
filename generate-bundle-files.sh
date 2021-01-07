@@ -35,7 +35,7 @@ shift "$(($OPTIND -1))"
 me=$(basename $0)
 my_dir=$(dirname $(readlink -f $0))
 
-python3 -m pip install pyyaml
+python3 -m pip install ruamel.yaml
 
 if [ "${current_release_branch}" = "" ]; then
 current_release_branch=${default_release_branch}
@@ -79,23 +79,11 @@ mv $tmp_dir/registration-operator/deploy/klusterlet/olm-catalog/klusterlet/metad
 
 cd ${my_dir}
 
-# If their is no previous version, delete "replaces:" field in csv
-if [ "$previous_operator_version" = "" ]; then
-  echo "Previous version is null ${previous_operator_version}"
-  sed -i '/^ *replaces:.*/d' ${my_dir}/manifests/klusterlet.clusterserviceversion.yaml
-fi
 
 csv_file_path=${my_dir}/manifests/klusterlet.clusterserviceversion.yaml
 version_config=${my_dir}/community-to-product-version.json
 
-csv_community_version=`python -c 'import parse_csv; print(parse_csv.get_community_version('\"${csv_file_path}\"'))'`
-
-csv_product_version=`python -c 'import parse_csv; print(parse_csv.get_product_version('\"${version_config}\",\"${csv_community_version}\"'))'`
-
-# Replace community version to product version
-sed -i 's/name: klusterlet.v'${csv_community_version}'/name: klusterlet.v'${csv_product_version}'/g' ${my_dir}/manifests/klusterlet.clusterserviceversion.yaml
-
-sed -i 's/version: '${csv_community_version}'/version: '${csv_product_version}'/g' ${my_dir}/manifests/klusterlet.clusterserviceversion.yaml
+csv_product_version=`python -c 'import parse_csv; print(parse_csv.update_csv('\"${csv_file_path}\",\"${version_config}\",\"${previous_operator_version}\"'))'`
 
 # Rename csv to versioned csv
 mv ${my_dir}/manifests/klusterlet.clusterserviceversion.yaml ${my_dir}/manifests/klusterlet."v"${csv_product_version}.clusterserviceversion.yaml 
