@@ -63,17 +63,17 @@ def update_skip_replaces(klusterlet_csv,cur_product_version,previous_operator_ve
          # Its predecessor is simply the z-1 release of the same x.y feature release. Since this is
          # in the z-stream of the first feature release, there is no need for a skipRange to handle
          # upgrade from a prior feature release.
-         klusterlet_csv["spec"]["replaces"] = "klusterlet.v"+cur_rel_version[0]+"."+cur_rel_version[1]+"."+str(int(cur_rel_version[2])-1)
+         klusterlet_csv["spec"]["replaces"] = "klusterlet-certified.v"+cur_rel_version[0]+"."+cur_rel_version[1]+"."+str(int(cur_rel_version[2])-1)
          return
       else:
          # 2.2.0 -> 2.2.1
-         klusterlet_csv["spec"]["replaces"] = "klusterlet.v"+cur_rel_version[0]+"."+cur_rel_version[1]+"."+str(int(cur_rel_version[2])-1)
+         klusterlet_csv["spec"]["replaces"] = "klusterlet-certified.v"+cur_rel_version[0]+"."+cur_rel_version[1]+"."+str(int(cur_rel_version[2])-1)
          klusterlet_csv["metadata"]["annotations"]["olm.skipRange"] = ">="+cur_rel_version[0]+"."+str(int(cur_rel_version[1])-1)+".0 <"+cur_rel_version[0]+"."+cur_rel_version[1]+".0"
    else:
       pre_rel_version = previous_operator_version.split('.')
       if pre_rel_version[0]==cur_rel_version[0] and pre_rel_version[1]==cur_rel_version[1]:
          # z stream upgrade 2.2.0 -> 2.2.1
-         klusterlet_csv["spec"]["replaces"]="klusterlet.v"+previous_operator_version
+         klusterlet_csv["spec"]["replaces"]="klusterlet-certified.v"+previous_operator_version
          klusterlet_csv["metadata"]["annotations"]["olm.skipRange"] = ">="+cur_rel_version[0]+"."+pre_rel_version[1]+".0 <"+cur_rel_version[0]+"."+cur_rel_version[1]+".0"
       elif pre_rel_version[0]==cur_rel_version[0] and pre_rel_version[1]!=cur_rel_version[1]:
          # y stream upgrade 2.2.x -> 2.3.x
@@ -92,7 +92,7 @@ def update_csv(csv_pathn, config, previous_operator_version):
    
    # Update csv version to product version
    klusterlet_csv["spec"]["version"]=product_version
-   klusterlet_csv["metadata"]["name"]="klusterlet.v"+product_version
+   klusterlet_csv["metadata"]["name"]="klusterlet-certified.v"+product_version
 
    #Handle replaces and skip fileds
    update_skip_replaces(klusterlet_csv,product_version,previous_operator_version)
