@@ -86,12 +86,12 @@ version_config=${my_dir}/community-to-product-version.json
 csv_product_version=`python -c 'import parse_csv; print(parse_csv.update_csv('\"${csv_file_path}\",\"${version_config}\",\"${previous_operator_version}\"'))'`
 
 # Rename csv to versioned csv
-mv ${my_dir}/manifests/klusterlet.clusterserviceversion.yaml ${my_dir}/manifests/klusterlet-certified."v"${csv_product_version}.clusterserviceversion.yaml 
+mv ${my_dir}/manifests/klusterlet.clusterserviceversion.yaml ${my_dir}/manifests/klusterlet-product."v"${csv_product_version}.clusterserviceversion.yaml 
 
 # Replace channel   
 sed -i "s/stable/${channels_label}/g" ${my_dir}/metadata/annotations.yaml
 
-sed -i "s/klusterlet/klusterlet-certified/g" ${my_dir}/metadata/annotations.yaml
+sed -i "s/klusterlet/klusterlet-product/g" ${my_dir}/metadata/annotations.yaml
 
 rm -rf "$tmp_dir"
 
