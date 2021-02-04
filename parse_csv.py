@@ -94,6 +94,12 @@ def update_csv(csv_pathn, config, previous_operator_version):
    klusterlet_csv["spec"]["version"]=product_version
    klusterlet_csv["metadata"]["name"]="klusterlet-product.v"+product_version
 
+   # Add arch labels
+   klusterlet_csv['metadata']['labels'] =klusterlet_csv['metadata'].get('labels', {})
+   klusterlet_csv["metadata"]["labels"]["operatorframework.io/arch.amd64"]="supported"
+   klusterlet_csv["metadata"]["labels"]["operatorframework.io/arch.s390x"]="supported"
+   klusterlet_csv["metadata"]["labels"]["operatorframework.io/os.linux"]="supported"
+
    #Handle replaces and skip fileds
    update_skip_replaces(klusterlet_csv,product_version,previous_operator_version)
 
